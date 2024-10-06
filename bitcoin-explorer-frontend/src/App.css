@@ -1,0 +1,61 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f0f0;
+  margin: 0;
+  padding: 0;
+}
+
+.App {
+  max-width: 800px;
+  margin: 5% auto;
+  padding: 20px;
+  background-color: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 2rem;
+}
+
+h1 {
+  color: #1a1a1a;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+h2 {
+  color: #3498db;
+  margin-bottom: 20px;
+}
+
+h3 {
+  color: #2c3e50;
+  margin-top: 30px;
+}
+
+p {
+  color: #34495e;
+  line-height: 1.6;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+li {
+  background-color: #ecf0f1;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.transaction-hash {
+  font-family: monospace;
+  color: #2980b9;
+}
+
+.transaction-fee {
+  font-weight: bold;
+  color: #27ae60;
+}
