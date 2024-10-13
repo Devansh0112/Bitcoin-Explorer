@@ -12,17 +12,19 @@ use std::error::Error;
 use dotenv::dotenv;
 use std::env;
 
-
 #[derive(Deserialize, Serialize, Debug)]
 struct BlockData {
     block_height: i32,
     transaction_count: i32,
-    recent_transactions: String, // JSON string of recent transactions
+    recent_transactions: String,
     average_fee: f64,
     total_volume: f64,
     difficulty: f64,
     hash_rate: f64,
     market_price: f64,
+    trading_volume_24h: f64,
+    active_addresses_24h: i32,
+    mempool_size: i32,
 }
 
 #[derive(Deserialize, Debug)]
@@ -43,8 +45,8 @@ async fn update_database(pool: &PgPool, block_data: &BlockData) -> Result<(), sq
     sqlx::query!(
         r#"
         INSERT INTO block_data 
-        (block_height, transaction_count, recent_transactions, average_fee, total_volume, difficulty, hash_rate, market_price)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        (block_height, transaction_count, recent_transactions, average_fee, total_volume, difficulty, hash_rate, market_price, trading_volume_24h, active_addresses_24h, mempool_size)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         ON CONFLICT (block_height) DO UPDATE SET
         transaction_count = EXCLUDED.transaction_count,
         recent_transactions = EXCLUDED.recent_transactions,
@@ -52,16 +54,22 @@ async fn update_database(pool: &PgPool, block_data: &BlockData) -> Result<(), sq
         total_volume = EXCLUDED.total_volume,
         difficulty = EXCLUDED.difficulty,
         hash_rate = EXCLUDED.hash_rate,
-        market_price = EXCLUDED.market_price
+        market_price = EXCLUDED.market_price,
+        trading_volume_24h = EXCLUDED.trading_volume_24h,
+        active_addresses_24h = EXCLUDED.active_addresses_24h,
+        mempool_size = EXCLUDED.mempool_size
         "#,
         block_data.block_height,
         block_data.transaction_count,
-        recent_transactions,  // Now this is a serde_json::Value
+        recent_transactions,
         block_data.average_fee,
         block_data.total_volume,
         block_data.difficulty,
         block_data.hash_rate,
-        block_data.market_price
+        block_data.market_price,
+        block_data.trading_volume_24h,
+        block_data.active_addresses_24h,
+        block_data.mempool_size
     )
     .execute(pool)
     .await?;
@@ -88,11 +96,29 @@ fn calculate_total_volume(block_details: &serde_json::Value) -> f64 {
         .sum()
 }
 
+async fn fetch_off_chain_data(client: &reqwest::Client) -> Result<(f64, i32, i32), Box<dyn Error>> {
+    // Fetch trading volume (example using CoinGecko API)
+    let volume_data: serde_json::Value = client.get("https://api.coingecko.com/api/v3/coins/bitcoin")
+        .send().await?
+        .json().await?;
+    let trading_volume_24h = volume_data["market_data"]["total_volume"]["usd"].as_f64().unwrap_or(0.0);
+
+    // Fetch active addresses (you might need a different API for this)
+    let active_addresses_24h = 0; // Placeholder
+
+    // Fetch mempool size (example using Blockchain.info API)
+    let mempool_data: serde_json::Value = client.get("https://blockchain.info/q/unconfirmedcount")
+        .send().await?
+        .json().await?;
+    let mempool_size = mempool_data.as_i64().unwrap_or(0) as i32;
+
+    Ok((trading_volume_24h, active_addresses_24h, mempool_size))
+}
+
 async fn run_websocket(pool: PgPool) -> Result<(), Box<dyn Error>> {
     let (ws_stream, _) = connect_async(Url::parse("wss://ws.blockchain.info/inv")?).await?;
     let (mut write, read) = ws_stream.split();
 
-    // Subscribe to new blocks
     write.send(Message::Text(serde_json::to_string(&serde_json::json!({
         "op": "blocks_sub"
     }))?)).await?;
@@ -104,10 +130,8 @@ async fn run_websocket(pool: PgPool) -> Result<(), Box<dyn Error>> {
         match message_result {
             Ok(message) => {
                 if let Message::Text(text) = message {
-                    // Your existing message handling code here
                     let raw_data: RawBlockData = serde_json::from_str(&text)?;
                     
-                    // Fetch additional data using HTTP requests
                     let block_details: serde_json::Value = client.get(&format!(
                         "https://blockchain.info/rawblock/{}",
                         raw_data.x.hash
@@ -116,6 +140,8 @@ async fn run_websocket(pool: PgPool) -> Result<(), Box<dyn Error>> {
                     let market_data: serde_json::Value = client.get(
                         "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
                     ).send().await?.json().await?;
+
+                    let (trading_volume_24h, active_addresses_24h, mempool_size) = fetch_off_chain_data(&client).await?;
 
                     let recent_transactions = serde_json::to_string(
                         &block_details["tx"]
@@ -139,8 +165,11 @@ async fn run_websocket(pool: PgPool) -> Result<(), Box<dyn Error>> {
                         average_fee: calculate_average_fee(&block_details),
                         total_volume: calculate_total_volume(&block_details),
                         difficulty: block_details["difficulty"].as_f64().unwrap_or(0.0),
-                        hash_rate: block_details["difficulty"].as_f64().unwrap_or(0.0) / 600.0, // Approximate
+                        hash_rate: block_details["difficulty"].as_f64().unwrap_or(0.0) / 600.0,
                         market_price: market_data["bitcoin"]["usd"].as_f64().unwrap_or(0.0),
+                        trading_volume_24h,
+                        active_addresses_24h,
+                        mempool_size,
                     };
 
                     println!("Processed new block data: {:?}", block_data);
@@ -190,7 +219,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
             }
         }
 
-        // Wait before attempting to reconnect
         tokio::time::sleep(std::time::Duration::from_secs(5)).await;
         println!("Attempting to reconnect...");
     }

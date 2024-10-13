@@ -5,14 +5,20 @@ use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
 use std::env;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize, Serialize, Debug)]
 struct BlockData {
     block_height: i32,
     transaction_count: i32,
     recent_transactions: Vec<Transaction>,
+    average_fee: f64,
+    total_volume: f64,
+    difficulty: f64,
+    hash_rate: f64,
+    market_price: f64,
+    mempool_size: i32,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct Transaction {
     hash: String,
     fee: i64,
@@ -23,6 +29,12 @@ struct RawBlockData {
     block_height: i32,
     transaction_count: i32,
     recent_transactions: serde_json::Value,
+    average_fee: Option<f64>,
+    total_volume: Option<f64>,
+    difficulty: Option<f64>,
+    hash_rate: Option<f64>,
+    market_price: Option<f64>,
+    mempool_size: Option<i32>,
 }
 
 #[get("/latest_block")]
@@ -30,7 +42,8 @@ async fn get_latest_block(pool: web::Data<PgPool>) -> impl Responder {
     let result = sqlx::query_as!(
         RawBlockData,
         r#"
-        SELECT block_height, transaction_count, recent_transactions
+        SELECT block_height, transaction_count, recent_transactions, 
+               average_fee, total_volume, difficulty, hash_rate, market_price, mempool_size
         FROM block_data
         ORDER BY block_height DESC
         LIMIT 1
@@ -46,6 +59,12 @@ async fn get_latest_block(pool: web::Data<PgPool>) -> impl Responder {
                 block_height: raw_data.block_height,
                 transaction_count: raw_data.transaction_count,
                 recent_transactions,
+                average_fee: raw_data.average_fee.unwrap_or(0.0),
+                total_volume: raw_data.total_volume.unwrap_or(0.0),
+                difficulty: raw_data.difficulty.unwrap_or(0.0),
+                hash_rate: raw_data.hash_rate.unwrap_or(0.0),
+                market_price: raw_data.market_price.unwrap_or(0.0),
+                mempool_size: raw_data.mempool_size.unwrap_or(0),
             };
             web::Json(block_data)
         },
@@ -53,6 +72,12 @@ async fn get_latest_block(pool: web::Data<PgPool>) -> impl Responder {
             block_height: 0,
             transaction_count: 0,
             recent_transactions: vec![],
+            average_fee: 0.0,
+            total_volume: 0.0,
+            difficulty: 0.0,
+            hash_rate: 0.0,
+            market_price: 0.0,
+            mempool_size: 0,
         }),
     }
 }
