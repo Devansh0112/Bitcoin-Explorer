@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  ingestion:
+    build:
+      context: ./bitcoin_ingestion
+      dockerfile: Dockerfile
+    environment:
+      - ./bitcoin_ingestion/.env
+
+  backend:
+    build:
+      context: ./node-backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - ./node-backend/.env
+
+  frontend:
+    build: 
+      context: ./bitcoin-explorer-frontend
+      dockerfile: Dockerfile
+    container_name: frontend_c
+    ports:
+      - "3000:80"
+    volumes:
+      - ./bitcoin-explorer-frontend/build:/usr/share/nginx/htmle
+    environment:
+      - NODE_ENV=production
+
+
+networks:
+  default:
+    name: bitcoin_explorer_network
