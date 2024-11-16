@@ -19,7 +19,7 @@ function App() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get<BlockData>('http://localhost:8080/latest_block');
+        const response = await axios.get<BlockData>('https://bitcoin-explorer-backend.onrender.com/latest_block');
         setBlockData(response.data);
       } catch (error) {
         console.error('Error fetching data:', error);
