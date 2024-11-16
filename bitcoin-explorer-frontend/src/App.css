@@ -1,61 +1,102 @@
+/* General Styles */
 body {
-  font-family: Arial, sans-serif;
-  background-color: #f0f0f0;
   margin: 0;
   padding: 0;
+  background-color: #f0f4f8; /* Light background */
+  font-family: 'Poppins', sans-serif; /* Modern font */
 }
 
 .App {
-  max-width: 800px;
-  margin: 5% auto;
-  padding: 20px;
-  background-color: white;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  border-radius: 2rem;
+  max-width: 900px;
+  margin: 50px auto; /* Center align with margin */
+  padding: 40px;
+  background-color: #ffffff; /* White background for the main container */
+  border-radius: 12px; /* Rounded corners */
+  
+  /* Add elevation effect with shadow */
+  box-shadow: rgba(0, 0, 0, 0.15) 0px 10px 30px;
 }
 
-h1 {
-  color: #1a1a1a;
+/* Title Styling */
+.title {
   text-align: center;
-  margin-bottom: 30px;
+  font-size: 36px;
+  color: #007bff; /* Blue color for emphasis */
 }
 
-h2 {
-  color: #3498db;
-  margin-bottom: 20px;
+/* Block Info Section */
+.block-info {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(200px, 1fr)); /* Three columns layout */
+  gap: 20px; /* Space between cards */
 }
 
-h3 {
-  color: #2c3e50;
-  margin-top: 30px;
+.info-card {
+    background-color: #f9fbfd; /* Light gray background for cards */
+    padding: 5px;
+    margin: 5px;
+    border-radius: 12px; /* Smooth rounded corners */
+    
+    /* Enhanced shadow for elevation effect */
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+    
+    /* Transition for hover effect */
+    transition: transform .2s ease-in-out, box-shadow .2s ease-in-out;
 }
 
-p {
-  color: #34495e;
-  line-height: 1.6;
+.info-card:hover {
+    transform: translateY(-4px); /* Lifts the card on hover */
+    box-shadow: rgba(0, 0, 0, .2) 0px 8px 16px; /* Darker shadow on hover */
 }
 
-ul {
-  list-style-type: none;
-  padding: 0;
+.info-card h2 {
+   font-size: 16px;
+   color:#333;
+   margin-bottom:10px;
 }
 
-li {
-  background-color: #ecf0f1;
-  margin-bottom: 10px;
-  padding: 10px;
-  border-radius: 5px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.info-card p {
+   font-size:24px;
+   font-weight:bold;
+   color:#007bff; /* Blue color for emphasis */
 }
 
-.transaction-hash {
-  font-family: monospace;
-  color: #2980b9;
+/* Recent Transactions Section */
+.transactions-title {
+    margin-top :40 px; 
+    font-size :22 px; 
+    color:#0056b3 ; 
+    text-align:left ;
 }
 
-.transaction-fee {
-  font-weight: bold;
-  color: #27ae60;
+.transactions-list {
+    list-style-type:none; 
+    padding :0 ; 
+}
+
+.transaction-item {
+    background-color:#ffffff ; /* White background for transactions as well */
+    padding :15 px; 
+    margin-bottom :10 px; 
+    
+    /* Rounded corners and enhanced shadow for each transaction item */
+    border-radius :10 px; 
+    box-shadow :rgba (0 ,0 ,0 ,.1 )0 px4 px10 px; 
+    
+    /* Add subtle hover effect */
+    transition :transform .2 s ease-in-out ,box-shadow .2 s ease-in-out ; 
+    
+}
+
+.transaction-item:hover{
+    transform :translateY(-2 px); /* Lifts the transaction item on hover */
+    box-shadow :rgba (0 ,0 ,0 ,.2 )0 px6 px12 px ; 
+}
+
+/* Responsive Design */
+@media (max-width :768px){
+     .block-info{
+        grid-template-columns :repeat (1 ,1 fr); 
+        
+     }
 }
