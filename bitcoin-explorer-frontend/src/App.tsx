@@ -39,7 +39,7 @@ function App() {
   return (
     <div className="App">
       <h1>Bitcoin Explorer</h1>
-      <h2>Latest Block: {blockData.block_height}</h2>
+      <h2>Latest Block Info: {blockData.block_height}</h2>
       <p>Total Transactions: {blockData.transaction_count}</p>
       <h3>Recent Transactions:</h3>
       <ul>
